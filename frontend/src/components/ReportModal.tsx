@@ -84,8 +84,8 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, data }) => {
     doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 30);
     doc.text(`Total de registros: ${reportData.length}`, 14, 35);
 
-    const headers = [selectedCols.map(id => COLUMNS.find(c => c.id === id)?.label)];
-    const rows = reportData.map(row => Object.values(row));
+    const headers = [selectedCols.map(id => COLUMNS.find(c => c.id === id)?.label || '')];
+    const rows = reportData.map(row => Object.values(row).map(val => String(val)));
 
     autoTable(doc, {
       head: headers,
