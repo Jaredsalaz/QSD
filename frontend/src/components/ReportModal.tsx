@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, FileSpreadsheet, FileText, CheckSquare, Square, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 // Fix for jspdf-autotable typing in some environments
 interface jsPDFWithPlugin extends jsPDF {
@@ -87,7 +87,7 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, data }) => {
     const headers = [selectedCols.map(id => COLUMNS.find(c => c.id === id)?.label)];
     const rows = reportData.map(row => Object.values(row));
 
-    doc.autoTable({
+    autoTable(doc, {
       head: headers,
       body: rows,
       startY: 45,
