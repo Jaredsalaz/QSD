@@ -2,11 +2,16 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { Trash2, Pencil, X, Search, UserCheck } from 'lucide-react';
+import { Trash2, Pencil, X, Search, UserCheck, MessageSquare, Phone, Mail } from 'lucide-react';
 import MapPicker from '../components/MapPicker';
 import Sidebar from '../components/Sidebar';
 import RegistrationForm from '../components/RegistrationForm';
-import { SuccessScreen } from '../components/OTPModal';
+import AlertModal from '../components/AlertModal';
+import DatePicker, { registerLocale } from 'react-datepicker';
+import { es } from 'date-fns/locale/es';
+import 'react-datepicker/dist/react-datepicker.css';
+
+registerLocale('es', es);
 
 const AdminDashboard = () => {
   const [records, setRecords] = useState<any[]>([]);
@@ -15,6 +20,20 @@ const AdminDashboard = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   
+  // Alert API state
+  const [alert, setAlert] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'confirm' | 'error';
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+  }>({
+    isOpen: false,
+    type: 'success',
+    title: '',
+    message: ''
+  });
+
   const navigate = useNavigate();
 
   const fetchRecords = async () => {
@@ -35,13 +54,33 @@ const AdminDashboard = () => {
     }
   }, [navigate]);
 
+  const confirmDelete = (id: string) => {
+    setAlert({
+      isOpen: true,
+      type: 'confirm',
+      title: 'Eliminar Registro',
+      message: '¿Estás seguro de eliminar este registro permanentemente de la vista?',
+      onConfirm: () => handleDelete(id)
+    });
+  };
+
   const handleDelete = async (id: string) => {
-    if (!window.confirm('¿Estás seguro de eliminar este registro lógicamente? No se borrará de la base de datos, solo se ocultará.')) return;
     try {
       await api.delete(`/admin/records/${id}`);
+      setAlert({
+        isOpen: true,
+        type: 'success',
+        title: 'Registro Eliminado',
+        message: 'El ciudadano ha sido removido exitosamente de la lista activa.'
+      });
       fetchRecords(); 
     } catch (err) {
-      alert('Error eliminando registro.');
+      setAlert({
+        isOpen: true,
+        type: 'error',
+        title: 'Error',
+        message: 'No se pudo eliminar el registro en este momento.'
+      });
     }
   };
 
@@ -50,9 +89,20 @@ const AdminDashboard = () => {
     try {
       await api.put(`/admin/records/${editingRecord.id}`, editingRecord);
       setEditingRecord(null);
+      setAlert({
+        isOpen: true,
+        type: 'success',
+        title: 'Actualización Exitosa',
+        message: 'La información del ciudadano ha sido actualizada correctamente en el servidor.'
+      });
       fetchRecords();
     } catch (err) {
-      alert('Error al guardar cambios.');
+      setAlert({
+        isOpen: true,
+        type: 'error',
+        title: 'Error de Guardado',
+        message: 'Ocurrió un problema al intentar guardar los cambios.'
+      });
     }
   };
 
@@ -124,7 +174,7 @@ const AdminDashboard = () => {
                   <thead style={{ background: 'rgba(0,0,0,0.02)' }}>
                     <tr style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.05)' }}>
                       <th style={{ padding: '1.25rem 1rem' }}>Ciudadano</th>
-                      <th style={{ padding: '1.25rem 1rem' }}>Contacto</th>
+                      <th style={{ padding: '1.25rem 1rem' }}>Contacto y Redes</th>
                       <th style={{ padding: '1.25rem 1rem' }}>Dependencia / Cargo</th>
                       <th style={{ padding: '1.25rem 1rem' }}>Ubicación</th>
                       <th style={{ padding: '1.25rem 1rem', textAlign: 'center' }}>Acciones</th>
@@ -133,28 +183,39 @@ const AdminDashboard = () => {
                   <tbody>
                     {filteredRecords.map((record) => (
                       <tr key={record.id} style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.03)' }}>
-                        <td style={{ padding: '1rem' }}>
-                          <div style={{ fontWeight: 600 }}>{record.name} {record.paternal_name}</div>
+                        <td style={{ padding: '1.5rem 1rem' }}>
+                          <div style={{ fontWeight: 600, fontSize: '1rem' }}>{record.name} {record.paternal_name}</div>
                           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>ID: {record.id.split('-')[0]}</div>
                         </td>
-                        <td style={{ padding: '1rem' }}>
-                          <div style={{ fontSize: '0.9rem' }}>{record.email}</div>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{record.phone}</div>
+                        <td style={{ padding: '1.5rem 1rem' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                               <Mail size={14} color="var(--gold-opaque)" /> {record.email}
+                             </div>
+                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                               <Phone size={14} color="var(--gold-opaque)" /> {record.phone}
+                             </div>
+                             {record.social_media && (
+                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--gold-opaque)' }}>
+                                 <MessageSquare size={14} /> {record.social_media}
+                               </div>
+                             )}
+                          </div>
                         </td>
-                        <td style={{ padding: '1rem' }}>
+                        <td style={{ padding: '1.5rem 1rem' }}>
                           <div style={{ fontSize: '0.9rem', fontWeight: 500 }}>{record.secretary}</div>
                           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{record.position}</div>
                         </td>
-                        <td style={{ padding: '1rem' }}>
+                        <td style={{ padding: '1.5rem 1rem' }}>
                           <div style={{ fontSize: '0.9rem' }}>CP: {record.zip_code}</div>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{record.address}</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{record.address}</div>
                         </td>
-                        <td style={{ padding: '1rem' }}>
+                        <td style={{ padding: '1.5rem 1rem' }}>
                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
                             <button onClick={() => setEditingRecord({...record})} className="btn-secondary" style={{ padding: '0.5rem', border: 'none', background: 'rgba(212, 175, 55, 0.1)', color: 'var(--gold-opaque)' }}>
                               <Pencil size={18} />
                             </button>
-                            <button onClick={() => handleDelete(record.id)} className="btn-danger" style={{ padding: '0.5rem', border: 'none' }}>
+                            <button onClick={() => confirmDelete(record.id)} className="btn-danger" style={{ padding: '0.5rem', border: 'none' }}>
                               <Trash2 size={18} />
                             </button>
                            </div>
@@ -166,7 +227,7 @@ const AdminDashboard = () => {
                         <td colSpan={5} style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
                             <Search size={48} opacity={0.2} />
-                            <span>No se encontraron registros que coincidan con la búsqueda.</span>
+                            <span>No se encontraron registros.</span>
                           </div>
                         </td>
                       </tr>
@@ -183,20 +244,7 @@ const AdminDashboard = () => {
               exit={{ opacity: 0, x: -20 }}
               style={{ maxWidth: '900px', margin: '0 auto' }}
             >
-              {showSuccess ? (
-                <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem' }}>
-                   <SuccessScreen onReset={() => setShowSuccess(false)} />
-                   <button 
-                    className="btn-primary" 
-                    style={{ marginTop: '2rem' }}
-                    onClick={() => setCurrentView('LIST')}
-                   >
-                     Volver a la Lista
-                   </button>
-                </div>
-              ) : (
-                <RegistrationForm onRegistrationSuccess={handleRegistrationSuccess} />
-              )}
+              <RegistrationForm onRegistrationSuccess={handleRegistrationSuccess} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -233,7 +281,17 @@ const AdminDashboard = () => {
                   </div>
                   <div className="form-group">
                     <label className="form-label">Fecha de Nacimiento</label>
-                    <input type="date" required className="form-control" value={editingRecord.date_of_birth} onChange={(e) => setEditingRecord({...editingRecord, date_of_birth: e.target.value})} />
+                    <DatePicker
+                      selected={editingRecord.date_of_birth ? new Date(editingRecord.date_of_birth + 'T12:00:00') : null}
+                      onChange={(date) => setEditingRecord({...editingRecord, date_of_birth: date?.toISOString().split('T')[0]})}
+                      dateFormat="dd/MM/yyyy"
+                      className="form-control"
+                      showMonthDropdown
+                      showYearDropdown
+                      dropdownMode="select"
+                      locale="es"
+                      required
+                    />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Teléfono</label>
@@ -283,6 +341,18 @@ const AdminDashboard = () => {
             </motion.div>
           </div>
         )}
+
+        <AlertModal 
+          isOpen={alert.isOpen}
+          type={alert.type}
+          title={alert.title}
+          message={alert.message}
+          onConfirm={() => {
+            if (alert.onConfirm) alert.onConfirm();
+            setAlert({ ...alert, isOpen: false });
+          }}
+          onClose={() => setAlert({ ...alert, isOpen: false })}
+        />
       </main>
     </div>
   );

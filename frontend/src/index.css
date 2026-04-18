@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "leaflet/dist/leaflet.css";
+@import "react-datepicker/dist/react-datepicker.css";
 
 :root {
   --gold-opaque: #D4AF37;
@@ -293,4 +294,36 @@ body {
   border-radius: 16px;
   z-index: 1;
   border: 1px solid rgba(0,0,0,0.05);
+}
+
+/* DatePicker Custom Styles */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker {
+  font-family: 'Inter', sans-serif !important;
+  border: 1px solid rgba(0,0,0,0.05) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+}
+
+.react-datepicker__header {
+  background-color: #fff !important;
+  border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+  padding: 1rem 0 !important;
+  border-top-left-radius: 16px !important;
+  border-top-right-radius: 16px !important;
+}
+
+.react-datepicker__day--selected, 
+.react-datepicker__day--keyboard-selected {
+  background-color: var(--gold-opaque) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+}
+
+.react-datepicker__day:hover {
+  background-color: rgba(212, 175, 55, 0.1) !important;
+  border-radius: 8px !important;
 }

@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import api from '../api';
 import MapPicker from './MapPicker';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { es } from 'date-fns/locale/es'; // Optional: for Spanish labels
 
 interface RegistrationFormProps {
   onRegistrationSuccess: () => void;
@@ -12,7 +15,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegistrationSucce
     name: '',
     paternal_name: '',
     maternal_name: '',
-    date_of_birth: '',
+    date_of_birth: '', // We will store YYYY-MM-DD
     secretary: '',
     position: '',
     phone: '',
@@ -26,9 +29,21 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegistrationSucce
   
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [startDate, setStartDate] = useState<Date | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleDateChange = (date: Date | null) => {
+    setStartDate(date);
+    if (date) {
+      // Format to YYYY-MM-DD for backend
+      const formattedDate = date.toISOString().split('T')[0];
+      setFormData({ ...formData, date_of_birth: formattedDate });
+    } else {
+      setFormData({ ...formData, date_of_birth: '' });
+    }
   };
 
   const setCoordinates = (lat: string, lng: string) => {
@@ -55,7 +70,6 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegistrationSucce
     
     setLoading(true);
     try {
-      // Direct registration backend call
       await api.post('/register', formData);
       onRegistrationSuccess();
     } catch (err: any) {
@@ -100,7 +114,18 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegistrationSucce
           </div>
           <div className="form-group">
             <label className="form-label">Fecha de Nacimiento</label>
-            <input type="date" name="date_of_birth" className="form-control" onChange={handleChange} required />
+            <DatePicker
+              selected={startDate}
+              onChange={handleDateChange}
+              dateFormat="dd/MM/yyyy"
+              placeholderText="Seleccione fecha"
+              className="form-control"
+              showMonthDropdown
+              showYearDropdown
+              dropdownMode="select"
+              locale={es}
+              required
+            />
           </div>
           <div className="form-group">
             <label className="form-label">Secretaría</label>
