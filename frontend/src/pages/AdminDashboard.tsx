@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { Trash2, Pencil, X, Search, UserCheck, MessageSquare, Phone, Mail } from 'lucide-react';
+import { Trash2, Pencil, X, Search, UserCheck, MessageSquare, Phone, Mail, ChevronLeft, ChevronRight, Filter, Loader2 } from 'lucide-react';
 import MapPicker from '../components/MapPicker';
 import Sidebar from '../components/Sidebar';
 import RegistrationForm from '../components/RegistrationForm';
@@ -18,8 +18,19 @@ const AdminDashboard = () => {
   const [editingRecord, setEditingRecord] = useState<any | null>(null);
   const [currentView, setCurrentView] = useState<'LIST' | 'REGISTER'>('LIST');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Alert API state
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  // Filter State
+  const [selectedSecretary, setSelectedSecretary] = useState('ALL');
+  
+  // Key to force reset of registration form
+  const [regFormKey, setRegFormKey] = useState(0);
+
+  // Alert state
   const [alert, setAlert] = useState<{
     isOpen: boolean;
     type: 'success' | 'confirm' | 'error';
@@ -36,11 +47,14 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
 
   const fetchRecords = async () => {
+    setIsLoading(true);
     try {
       const res = await api.get('/admin/records');
       setRecords(res.data);
     } catch (err: any) {
       if (err.response?.status === 401) navigate('/admin');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -53,6 +67,31 @@ const AdminDashboard = () => {
     }
   }, [navigate]);
 
+  // Derived Values
+  const secretaries = useMemo(() => {
+    const set = new Set(records.map(r => r.secretary));
+    return Array.from(set).sort();
+  }, [records]);
+
+  const filteredRecords = useMemo(() => {
+    return records.filter(r => {
+      const matchesSearch = 
+        r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        r.paternal_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        r.email.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesSecretary = selectedSecretary === 'ALL' || r.secretary === selectedSecretary;
+      
+      return matchesSearch && matchesSecretary;
+    });
+  }, [records, searchTerm, selectedSecretary]);
+
+  const totalPages = Math.ceil(filteredRecords.length / itemsPerPage);
+  const paginatedRecords = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredRecords.slice(start, start + itemsPerPage);
+  }, [filteredRecords, currentPage]);
+
   const confirmDelete = (id: string) => {
     setAlert({
       isOpen: true,
@@ -64,6 +103,7 @@ const AdminDashboard = () => {
   };
 
   const handleDelete = async (id: string) => {
+    setIsLoading(true);
     try {
       await api.delete(`/admin/records/${id}`);
       setAlert({
@@ -78,13 +118,16 @@ const AdminDashboard = () => {
         isOpen: true,
         type: 'error',
         title: 'Error',
-        message: 'No se pudo eliminar el registro en este momento.'
+        message: 'No se pudo eliminar el registro.'
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       await api.put(`/admin/records/${editingRecord.id}`, editingRecord);
       setEditingRecord(null);
@@ -92,7 +135,7 @@ const AdminDashboard = () => {
         isOpen: true,
         type: 'success',
         title: 'Actualización Exitosa',
-        message: 'La información del ciudadano ha sido actualizada correctamente.'
+        message: 'La información ha sido actualizada correctamente.'
       });
       fetchRecords();
     } catch (err) {
@@ -100,8 +143,10 @@ const AdminDashboard = () => {
         isOpen: true,
         type: 'error',
         title: 'Error de Guardado',
-        message: 'Ocurrió un problema al intentar guardar los cambios.'
+        message: 'Ocurrió un problema al guardar los cambios.'
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -117,18 +162,12 @@ const AdminDashboard = () => {
       title: 'Registro Exitoso',
       message: 'El ciudadano ha sido dado de alta. ¿Qué deseas hacer ahora?',
       onConfirm: () => {
-        // Stay in REGISTER view, just reset form if needed or just close modal
+        setRegFormKey(prev => prev + 1); // Reset the form by changing key
         setAlert({ ...alert, isOpen: false });
       }
     });
     fetchRecords();
   };
-
-  const filteredRecords = records.filter(r => 
-    r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.paternal_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <div className="dashboard-layout">
@@ -136,37 +175,71 @@ const AdminDashboard = () => {
         currentView={currentView} 
         onViewChange={(view) => {
           setCurrentView(view);
+          setCurrentPage(1); // Reset pagination when switching views
         }} 
         onLogout={handleLogout} 
       />
 
       <main className="main-content">
-        <header style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <header style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h1 style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--text-main)' }}>
               {currentView === 'LIST' ? 'Gestión de Registros' : 'Nuevo Registro de Ciudadano'}
             </h1>
             <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-              {currentView === 'LIST' ? `Total: ${records.length} registros activos` : 'Completa el formulario para dar de alta un nuevo perfil'}
+              {currentView === 'LIST' ? `Total: ${filteredRecords.length} encontrados` : 'Completa el formulario para dar de alta un nuevo perfil'}
             </p>
           </div>
           
           {currentView === 'LIST' && (
-            <div style={{ position: 'relative', width: '300px' }}>
-              <Search style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={18} />
-              <input 
-                type="text" 
-                placeholder="Buscar por nombre o correo..." 
-                className="form-control" 
-                style={{ paddingLeft: '3rem' }}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              {/* Filter */}
+              <div style={{ position: 'relative' }}>
+                <Filter style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={16} />
+                <select 
+                  className="form-control" 
+                  style={{ paddingLeft: '2.5rem', width: '200px' }}
+                  value={selectedSecretary}
+                  onChange={(e) => {
+                    setSelectedSecretary(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value="ALL">Todas las Secretarías</option>
+                  {secretaries.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+
+              {/* Search */}
+              <div style={{ position: 'relative' }}>
+                <Search style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={18} />
+                <input 
+                  type="text" 
+                  placeholder="Buscar..." 
+                  className="form-control" 
+                  style={{ paddingLeft: '3rem', width: '250px' }}
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                />
+              </div>
             </div>
           )}
         </header>
 
         <AnimatePresence mode="wait">
+          {isLoading && (
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}
+            >
+              <Loader2 className="spinner" size={48} color="var(--gold-opaque)" />
+              <span style={{ color: 'var(--gold-opaque)', fontWeight: 600 }}>Cargando...</span>
+            </motion.div>
+          )}
+
           {currentView === 'LIST' ? (
             <motion.div 
               key="list-view"
@@ -174,7 +247,7 @@ const AdminDashboard = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
               className="glass-panel"
-              style={{ padding: '0', overflow: 'hidden' }}
+              style={{ padding: '0', overflow: 'hidden', opacity: isLoading ? 0.3 : 1 }}
             >
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -188,7 +261,7 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredRecords.map((record) => (
+                    {paginatedRecords.map((record) => (
                       <tr key={record.id} style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.03)' }}>
                         <td style={{ padding: '1.5rem 1rem' }}>
                           <div style={{ fontWeight: 600, fontSize: '1rem' }}>{record.name} {record.paternal_name}</div>
@@ -229,7 +302,7 @@ const AdminDashboard = () => {
                         </td>
                       </tr>
                     ))}
-                    {filteredRecords.length === 0 && (
+                    {paginatedRecords.length === 0 && (
                       <tr>
                         <td colSpan={5} style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
@@ -242,16 +315,46 @@ const AdminDashboard = () => {
                   </tbody>
                 </table>
               </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div style={{ padding: '1.5rem', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                    Mostrando <span style={{ fontWeight: 600 }}>{paginatedRecords.length}</span> de <span style={{ fontWeight: 600 }}>{filteredRecords.length}</span>
+                  </p>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button 
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(p => p - 1)}
+                      className="btn-secondary" 
+                      style={{ padding: '0.5rem 1rem', opacity: currentPage === 1 ? 0.5 : 1 }}
+                    >
+                      <ChevronLeft size={18} /> Anterior
+                    </button>
+                    <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', px: '1rem' }}>
+                      <span style={{ fontWeight: 600 }}>{currentPage}</span> / {totalPages}
+                    </div>
+                    <button 
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage(p => p + 1)}
+                      className="btn-secondary" 
+                      style={{ padding: '0.5rem 1rem', opacity: currentPage === totalPages ? 0.5 : 1 }}
+                    >
+                      Siguiente <ChevronRight size={18} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           ) : (
             <motion.div 
-              key="register-view"
+              key={`register-view-${regFormKey}`}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               style={{ maxWidth: '900px', margin: '0 auto' }}
             >
-              <RegistrationForm onRegistrationSuccess={handleRegistrationSuccess} />
+              <RegistrationForm key={regFormKey} onRegistrationSuccess={handleRegistrationSuccess} />
             </motion.div>
           )}
         </AnimatePresence>
