@@ -2,11 +2,12 @@ import { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { Trash2, Pencil, X, Search, UserCheck, MessageSquare, Phone, Mail, ChevronLeft, ChevronRight, Filter, Loader2 } from 'lucide-react';
+import { Trash2, Pencil, X, Search, UserCheck, MessageSquare, Phone, Mail, ChevronLeft, ChevronRight, Filter, Loader2, FileDown } from 'lucide-react';
 import MapPicker from '../components/MapPicker';
 import Sidebar from '../components/Sidebar';
 import RegistrationForm from '../components/RegistrationForm';
 import AlertModal from '../components/AlertModal';
+import ReportModal from '../components/ReportModal';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import { es } from 'date-fns/locale/es';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -19,6 +20,7 @@ const AdminDashboard = () => {
   const [currentView, setCurrentView] = useState<'LIST' | 'REGISTER'>('LIST');
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -162,7 +164,7 @@ const AdminDashboard = () => {
       title: 'Registro Exitoso',
       message: 'El ciudadano ha sido dado de alta. ¿Qué deseas hacer ahora?',
       onConfirm: () => {
-        setRegFormKey(prev => prev + 1); // Reset the form by changing key
+        setRegFormKey(prev => prev + 1);
         setAlert({ ...alert, isOpen: false });
       }
     });
@@ -175,7 +177,7 @@ const AdminDashboard = () => {
         currentView={currentView} 
         onViewChange={(view) => {
           setCurrentView(view);
-          setCurrentPage(1); // Reset pagination when switching views
+          setCurrentPage(1);
         }} 
         onLogout={handleLogout} 
       />
@@ -192,13 +194,23 @@ const AdminDashboard = () => {
           </div>
           
           {currentView === 'LIST' && (
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              {/* Reports Button */}
+              <button 
+                onClick={() => setIsReportModalOpen(true)}
+                className="btn-secondary" 
+                style={{ height: '45px', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(212,175,55,0.1)', borderColor: 'rgba(212,175,55,0.3)' }}
+              >
+                <FileDown size={18} color="var(--gold-opaque)" />
+                <span style={{ color: 'var(--gold-opaque)' }}>Reportes</span>
+              </button>
+
               {/* Filter */}
               <div style={{ position: 'relative' }}>
                 <Filter style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={16} />
                 <select 
                   className="form-control" 
-                  style={{ paddingLeft: '2.5rem', width: '200px' }}
+                  style={{ paddingLeft: '2.5rem', width: '200px', height: '45px' }}
                   value={selectedSecretary}
                   onChange={(e) => {
                     setSelectedSecretary(e.target.value);
@@ -217,7 +229,7 @@ const AdminDashboard = () => {
                   type="text" 
                   placeholder="Buscar..." 
                   className="form-control" 
-                  style={{ paddingLeft: '3rem', width: '250px' }}
+                  style={{ paddingLeft: '3rem', width: '250px', height: '45px' }}
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
@@ -317,7 +329,7 @@ const AdminDashboard = () => {
               </div>
 
               {/* Pagination Controls */}
-              {totalPages > 1 && (
+              {filteredRecords.length > 0 && (
                 <div style={{ padding: '1.5rem', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
                     Mostrando <span style={{ fontWeight: 600 }}>{paginatedRecords.length}</span> de <span style={{ fontWeight: 600 }}>{filteredRecords.length}</span>
@@ -451,6 +463,12 @@ const AdminDashboard = () => {
             </motion.div>
           </div>
         )}
+
+        <ReportModal 
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          data={filteredRecords} // Intelligent: Exports what you see filtered
+        />
 
         <AlertModal 
           isOpen={alert.isOpen}
