@@ -1,13 +1,10 @@
-# fly.toml app configuration file generated for qsd on 2026-04-18
+# fly.toml app configuration file generated for qsd-web
 
-app = "qsd"
+app = "qsd-web"
 primary_region = "ams"
 
-[deploy]
-  release_command = "python seed_admins.py"
-
 [http_service]
-  internal_port = 8080
+  internal_port = 80
   force_https = true
   auto_stop_machines = true
   auto_start_machines = true
