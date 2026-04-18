@@ -331,7 +331,7 @@ const AdminDashboard = () => {
                     >
                       <ChevronLeft size={18} /> Anterior
                     </button>
-                    <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', px: '1rem' }}>
+                    <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', padding: '0 1rem' }}>
                       <span style={{ fontWeight: 600 }}>{currentPage}</span> / {totalPages}
                     </div>
                     <button 
