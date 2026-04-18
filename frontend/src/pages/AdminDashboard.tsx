@@ -113,12 +113,15 @@ const AdminDashboard = () => {
   const handleRegistrationSuccess = () => {
     setAlert({
       isOpen: true,
-      type: 'success',
+      type: 'confirm',
       title: 'Registro Exitoso',
-      message: 'El nuevo ciudadano ha sido dado de alta correctamente.'
+      message: 'El ciudadano ha sido dado de alta. ¿Qué deseas hacer ahora?',
+      onConfirm: () => {
+        // Stay in REGISTER view, just reset form if needed or just close modal
+        setAlert({ ...alert, isOpen: false });
+      }
     });
     fetchRecords();
-    setCurrentView('LIST');
   };
 
   const filteredRecords = records.filter(r => 
@@ -212,7 +215,7 @@ const AdminDashboard = () => {
                         </td>
                         <td style={{ padding: '1.5rem 1rem' }}>
                           <div style={{ fontSize: '0.9rem' }}>CP: {record.zip_code}</div>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{record.address}</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', maxWidth: '220px', lineHeight: '1.4' }}>{record.address}</div>
                         </td>
                         <td style={{ padding: '1.5rem 1rem' }}>
                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
@@ -351,11 +354,18 @@ const AdminDashboard = () => {
           type={alert.type}
           title={alert.title}
           message={alert.message}
+          confirmText={alert.title === 'Registro Exitoso' ? 'Registrar Otro' : 'Confirmar'}
+          cancelText={alert.title === 'Registro Exitoso' ? 'Ver Lista' : 'Cancelar'}
           onConfirm={() => {
             if (alert.onConfirm) alert.onConfirm();
             setAlert({ ...alert, isOpen: false });
           }}
-          onClose={() => setAlert({ ...alert, isOpen: false })}
+          onClose={() => {
+            if (alert.title === 'Registro Exitoso') {
+              setCurrentView('LIST');
+            }
+            setAlert({ ...alert, isOpen: false });
+          }}
         />
       </main>
     </div>
