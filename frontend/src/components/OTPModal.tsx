@@ -90,7 +90,7 @@ export const SuccessScreen = ({ onReset }: { onReset: () => void }) => (
     <CheckCircle2 size={80} color="var(--gold-opaque)" style={{ marginBottom: '1.5rem' }} />
     <h2 style={{ marginBottom: '1rem' }}>¡Registro Exitoso!</h2>
     <p style={{ textAlign: 'center', color: 'var(--text-muted)', maxWidth: '400px', marginBottom: '2rem' }}>
-      Tus datos han sido guardados correctamente de forma segura. Te hemos enviado un correo de confirmación.
+      Tus datos han sido guardados correctamente de forma segura en nuestro sistema.
     </p>
     <button className="btn-primary" onClick={onReset}>
       Nuevo Registro

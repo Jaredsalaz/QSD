@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_BASE_URL = 'http://localhost:8888/api';
+export const API_BASE_URL = 'https://qsd.fly.dev/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,

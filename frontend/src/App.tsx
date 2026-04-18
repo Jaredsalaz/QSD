@@ -1,31 +1,22 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import RegistrationForm from './components/RegistrationForm';
-import OTPModal, { SuccessScreen } from './components/OTPModal';
+import { SuccessScreen } from './components/OTPModal';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import { ShieldAlert } from 'lucide-react';
 import logoPequeno from './assets/Logo pequeño.jpeg';
 
 const MainPortal = () => {
-  const [showOTP, setShowOTP] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [otpData, setOtpData] = useState({ email: '', regData: null });
   const navigate = useNavigate();
 
-  const handleOTPSent = (email: string, regData: any) => {
-    setOtpData({ email, regData });
-    setShowOTP(true);
-  };
-
-  const handleSuccess = () => {
-    setShowOTP(false);
+  const handleRegistrationSuccess = () => {
     setShowSuccess(true);
   };
 
   const handleReset = () => {
     setShowSuccess(false);
-    setOtpData({ email: '', regData: null });
   };
 
   return (
@@ -38,16 +29,7 @@ const MainPortal = () => {
       {showSuccess ? (
         <SuccessScreen onReset={handleReset} />
       ) : (
-        <RegistrationForm onOTPSent={handleOTPSent} />
-      )}
-
-      {showOTP && (
-        <OTPModal 
-          email={otpData.email} 
-          regData={otpData.regData} 
-          onSuccess={handleSuccess} 
-          onCancel={() => setShowOTP(false)}
-        />
+        <RegistrationForm onRegistrationSuccess={handleRegistrationSuccess} />
       )}
       
       <div style={{ marginTop: '3rem', textAlign: 'center' }}>

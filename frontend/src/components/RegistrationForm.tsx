@@ -5,10 +5,10 @@ import MapPicker from './MapPicker';
 import logoRegistro from '../assets/logo.jpeg';
 
 interface RegistrationFormProps {
-  onOTPSent: (email: string, regData: any) => void;
+  onRegistrationSuccess: () => void;
 }
 
-const RegistrationForm: React.FC<RegistrationFormProps> = ({ onOTPSent }) => {
+const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegistrationSuccess }) => {
   const [formData, setFormData] = useState({
     name: '',
     paternal_name: '',
@@ -56,11 +56,11 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onOTPSent }) => {
     
     setLoading(true);
     try {
-      // Initiate OTP backend call
-      await api.post('/register/initiate', { email: formData.email });
-      onOTPSent(formData.email, formData);
+      // Direct registration backend call
+      await api.post('/register', formData);
+      onRegistrationSuccess();
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Error al iniciar registro.');
+      setError(err.response?.data?.detail || 'Error al completar el registro.');
     } finally {
       setLoading(false);
     }

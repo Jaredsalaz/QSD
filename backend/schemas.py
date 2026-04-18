@@ -31,14 +31,6 @@ class RegistryResponse(RegistryBase):
     class Config:
         from_attributes = True
 
-class VerifyOTPRequest(BaseModel):
-    email: EmailStr
-    otp_code: str
-    registry_data: RegistryCreate
-
-class InitiateOTPRequest(BaseModel):
-    email: EmailStr
-
 class Token(BaseModel):
     access_token: str
     token_type: str

@@ -31,11 +31,3 @@ class Admin(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     email = Column(String(200), unique=True, index=True, nullable=False)
     hashed_password = Column(String(300), nullable=False)
-
-class OTPVerification(Base):
-    __tablename__ = "otp_verifications"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    email = Column(String(200), unique=True, index=True, nullable=False)
-    otp_code = Column(String(10), nullable=False)
-    expires_at = Column(DateTime, nullable=False)

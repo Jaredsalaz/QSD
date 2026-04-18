@@ -36,77 +36,23 @@ def get_current_admin(token: str = Depends(oauth2_scheme), db: Session = Depends
 
 # --- Public Endpoints ---
 
-@router.post("/register/initiate")
-def initiate_registration(req: schemas.InitiateOTPRequest, db: Session = Depends(get_db)):
-    # Check if email is already fully registered and not deleted
-    existing_user = db.query(models.UserRegistry).filter(models.UserRegistry.email == req.email, models.UserRegistry.is_deleted == False).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="El correo electrónico ya está registrado.")
-    
-    # Generate OTP
-    otp = utils.generate_otp()
-    expires = datetime.utcnow() + timedelta(minutes=15)
-    
-    # Save or update OTP record
-    otp_record = db.query(models.OTPVerification).filter(models.OTPVerification.email == req.email).first()
-    if otp_record:
-        otp_record.otp_code = otp
-        otp_record.expires_at = expires
-    else:
-        otp_record = models.OTPVerification(email=req.email, otp_code=otp, expires_at=expires)
-        db.add(otp_record)
-        
-    db.commit()
-    
-    # Send email
-    utils.send_email(
-        req.email,
-        "Tu código de verificación QSD",
-        f"Tu código de verificación es: {otp}\n\nIngrésalo en la aplicación para completar tu registro."
-    )
-    return {"message": "OTP enviado al correo."}
-
-@router.post("/register/verify")
-def verify_registration(req: schemas.VerifyOTPRequest, db: Session = Depends(get_db)):
-    otp_record = db.query(models.OTPVerification).filter(models.OTPVerification.email == req.email).first()
-    
-    if not otp_record or otp_record.otp_code != req.otp_code:
-        raise HTTPException(status_code=400, detail="Código OTP inválido.")
-    
-    if otp_record.expires_at < datetime.utcnow():
-        raise HTTPException(status_code=400, detail="El código OTP ha expirado.")
-
-    # Convert Pydantic model to dict
-    reg_data = req.registry_data.dict()
-    
+@router.post("/register", response_model=schemas.RegistryResponse)
+def register(req: schemas.RegistryCreate, db: Session = Depends(get_db)):
     # Ensure no duplicates via email
-    existing_user = db.query(models.UserRegistry).filter(models.UserRegistry.email == reg_data['email'], models.UserRegistry.is_deleted == False).first()
+    existing_user = db.query(models.UserRegistry).filter(
+        models.UserRegistry.email == req.email, 
+        models.UserRegistry.is_deleted == False
+    ).first()
+    
     if existing_user:
         raise HTTPException(status_code=400, detail="El correo ya se encuentra registrado.")
     
-    new_registry = models.UserRegistry(**reg_data)
+    new_registry = models.UserRegistry(**req.dict())
     db.add(new_registry)
     db.commit()
     db.refresh(new_registry)
     
-    # Cleanup OTP
-    db.delete(otp_record)
-    db.commit()
-    
-    # Send successful email
-    conf_msg = f"¡Hola {new_registry.name}!\n\nTu registro en QSD ha sido exitoso.\n\n"
-    conf_msg += f"Estos son tus datos registrados:\n"
-    conf_msg += f"Nombre: {new_registry.name} {new_registry.paternal_name} {new_registry.maternal_name}\n"
-    conf_msg += f"Fecha de nacimiento: {new_registry.date_of_birth}\n"
-    conf_msg += f"Secretaría: {new_registry.secretary}\n"
-    conf_msg += f"Cargo: {new_registry.position}\n"
-    conf_msg += f"Teléfono: {new_registry.phone}\n"
-    conf_msg += f"Domicilio: {new_registry.address}\n\n"
-    conf_msg += f"Gracias por usar QSD."
-    
-    utils.send_email(new_registry.email, "Registro Exitoso en QSD", conf_msg)
-    
-    return {"message": "Registro exitoso.", "id": str(new_registry.id)}
+    return new_registry
 
 # --- Admin Endpoints ---
 
