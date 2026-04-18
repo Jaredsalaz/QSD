@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import api from '../api';
 import MapPicker from './MapPicker';
-import logoRegistro from '../assets/logo.jpeg';
+import MapPicker from './MapPicker';
 
 interface RegistrationFormProps {
   onRegistrationSuccess: () => void;
