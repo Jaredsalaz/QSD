@@ -17,7 +17,6 @@ const AdminDashboard = () => {
   const [records, setRecords] = useState<any[]>([]);
   const [editingRecord, setEditingRecord] = useState<any | null>(null);
   const [currentView, setCurrentView] = useState<'LIST' | 'REGISTER'>('LIST');
-  const [showSuccess, setShowSuccess] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   
   // Alert API state
@@ -59,7 +58,7 @@ const AdminDashboard = () => {
       isOpen: true,
       type: 'confirm',
       title: 'Eliminar Registro',
-      message: '¿Estás seguro de eliminar este registro permanentemente de la vista?',
+      message: '¿Estás seguro de eliminar este registro?',
       onConfirm: () => handleDelete(id)
     });
   };
@@ -71,7 +70,7 @@ const AdminDashboard = () => {
         isOpen: true,
         type: 'success',
         title: 'Registro Eliminado',
-        message: 'El ciudadano ha sido removido exitosamente de la lista activa.'
+        message: 'El ciudadano ha sido removido exitosamente.'
       });
       fetchRecords(); 
     } catch (err) {
@@ -93,7 +92,7 @@ const AdminDashboard = () => {
         isOpen: true,
         type: 'success',
         title: 'Actualización Exitosa',
-        message: 'La información del ciudadano ha sido actualizada correctamente en el servidor.'
+        message: 'La información del ciudadano ha sido actualizada correctamente.'
       });
       fetchRecords();
     } catch (err) {
@@ -112,8 +111,14 @@ const AdminDashboard = () => {
   };
 
   const handleRegistrationSuccess = () => {
-    setShowSuccess(true);
+    setAlert({
+      isOpen: true,
+      type: 'success',
+      title: 'Registro Exitoso',
+      message: 'El nuevo ciudadano ha sido dado de alta correctamente.'
+    });
     fetchRecords();
+    setCurrentView('LIST');
   };
 
   const filteredRecords = records.filter(r => 
@@ -128,7 +133,6 @@ const AdminDashboard = () => {
         currentView={currentView} 
         onViewChange={(view) => {
           setCurrentView(view);
-          setShowSuccess(false);
         }} 
         onLogout={handleLogout} 
       />
@@ -283,7 +287,7 @@ const AdminDashboard = () => {
                     <label className="form-label">Fecha de Nacimiento</label>
                     <DatePicker
                       selected={editingRecord.date_of_birth ? new Date(editingRecord.date_of_birth + 'T12:00:00') : null}
-                      onChange={(date) => setEditingRecord({...editingRecord, date_of_birth: date?.toISOString().split('T')[0]})}
+                      onChange={(date: Date | null) => setEditingRecord({...editingRecord, date_of_birth: date?.toISOString().split('T')[0]})}
                       dateFormat="dd/MM/yyyy"
                       className="form-control"
                       showMonthDropdown
