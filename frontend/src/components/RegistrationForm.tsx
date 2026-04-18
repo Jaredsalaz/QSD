@@ -72,10 +72,11 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegistrationSucce
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="glass-panel"
+      style={{ padding: '2rem' }}
     >
-      <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-        <img src={logoRegistro} alt="QSD Logo" style={{ height: '100px', objectFit: 'contain', marginBottom: '1rem' }} />
-        <h2 style={{ color: 'var(--gold-opaque)' }}>Registro Gubernamental QSD</h2>
+      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <h2 style={{ color: 'var(--gold-opaque)', fontSize: '1.5rem', fontWeight: 600 }}>Captura de Nuevo Ciudadano</h2>
+        <p style={{ color: 'var(--text-muted)' }}>Ingrese los datos para el registro oficial en la base de datos QSD</p>
       </div>
       
       {error && (

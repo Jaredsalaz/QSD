@@ -37,7 +37,7 @@ def get_current_admin(token: str = Depends(oauth2_scheme), db: Session = Depends
 # --- Public Endpoints ---
 
 @router.post("/register", response_model=schemas.RegistryResponse)
-def register(req: schemas.RegistryCreate, db: Session = Depends(get_db)):
+def register(req: schemas.RegistryCreate, db: Session = Depends(get_db), current_admin: models.Admin = Depends(get_current_admin)):
     # Ensure no duplicates via email
     existing_user = db.query(models.UserRegistry).filter(
         models.UserRegistry.email == req.email, 
