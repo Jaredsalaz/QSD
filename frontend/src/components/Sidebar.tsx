@@ -1,14 +1,17 @@
 import React from 'react';
-import { List, UserPlus, LogOut } from 'lucide-react';
+import { List, UserPlus, LogOut, ClipboardList } from 'lucide-react';
 import logoPequeno from '../assets/Logo pequeño.jpeg';
 
 interface SidebarProps {
-  currentView: 'LIST' | 'REGISTER';
-  onViewChange: (view: 'LIST' | 'REGISTER') => void;
+  currentView: 'LIST' | 'REGISTER' | 'AUDIT';
+  onViewChange: (view: 'LIST' | 'REGISTER' | 'AUDIT') => void;
   onLogout: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onLogout }) => {
+  const role = localStorage.getItem('qsd_admin_role') || 'ADMIN';
+  const isDev = role === 'DEV';
+
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
@@ -32,6 +35,16 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onLogout }
           <UserPlus size={22} />
           <span>Nuevo Registro</span>
         </div>
+
+        {isDev && (
+          <div 
+            className={`sidebar-item ${currentView === 'AUDIT' ? 'active' : ''}`}
+            onClick={() => onViewChange('AUDIT')}
+          >
+            <ClipboardList size={22} />
+            <span>Bitácora</span>
+          </div>
+        )}
       </nav>
 
       <div className="sidebar-footer">

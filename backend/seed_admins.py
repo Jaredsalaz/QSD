@@ -13,9 +13,11 @@ def seed_multiple_admins():
     
     # Lista de administradores a crear
     admins_to_create = [
-        {"email": "admin1@qsd.com.mx", "password": "QSD_Admin_2026!"},
-        {"email": "admin2@qsd.com.mx", "password": "QSD_Admin_2026!"},
-        {"email": "admin3@qsd.com.mx", "password": "QSD_Admin_2026!"}
+        {"email": "dev@qsd.com.mx",        "password": "Dev_QSD2026!", "role": "DEV"},   # Desarrollador
+        {"email": "jczepeda@qsd.com.mx",   "password": "Zepeda_26QSD", "role": "ADMIN"},
+        {"email": "gzavala@qsd.com.mx",    "password": "Zavala2026",   "role": "ADMIN"},
+        {"email": "aasancho@qsd.com.mx",   "password": "Sancho_QSD",   "role": "ADMIN"},
+        {"email": "lacen@qsd.com.mx",      "password": "Cen2026_QSD",  "role": "ADMIN"},
     ]
     
     print("Iniciando creación de administradores...")
@@ -27,9 +29,9 @@ def seed_multiple_admins():
         existing = db.query(Admin).filter(Admin.email == email).first()
         if not existing:
             hashed_pw = get_password_hash(password)
-            new_admin = Admin(email=email, hashed_password=hashed_pw)
+            new_admin = Admin(email=email, hashed_password=hashed_pw, role=admin_data.get("role", "ADMIN"))
             db.add(new_admin)
-            print(f"[+] Administrador creado: {email}")
+            print(f"[+] Administrador creado: {email} (rol: {admin_data.get('role', 'ADMIN')})")
         else:
             print(f"[-] El administrador {email} ya existe.")
             

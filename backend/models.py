@@ -1,5 +1,6 @@
 import uuid
-from sqlalchemy import Column, String, Date, DateTime, Boolean, Text
+from sqlalchemy import Column, String, Date, DateTime, Boolean, Text, Enum
+import enum
 from sqlalchemy.dialects.postgresql import UUID
 from database import Base
 import datetime
@@ -31,3 +32,20 @@ class Admin(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     email = Column(String(200), unique=True, index=True, nullable=False)
     hashed_password = Column(String(300), nullable=False)
+    role = Column(String(20), default="ADMIN", nullable=False)  # ADMIN | DEV
+
+class ActionType(str, enum.Enum):
+    CREATE = "CREATE"
+    UPDATE = "UPDATE"
+    DELETE = "DELETE"
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    admin_email = Column(String(200), nullable=False, index=True)
+    action = Column(String(20), nullable=False)  # CREATE, UPDATE, DELETE
+    citizen_id = Column(String(100), nullable=False)
+    citizen_name = Column(String(300), nullable=False)
+    details = Column(Text, nullable=True)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow, index=True)

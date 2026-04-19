@@ -24,6 +24,7 @@ const AdminLogin = () => {
         password
       });
       localStorage.setItem('qsd_admin_token', res.data.access_token);
+      localStorage.setItem('qsd_admin_role', res.data.role || 'ADMIN');
       navigate('/admin/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Credenciales inválidas.');

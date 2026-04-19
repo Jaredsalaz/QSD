@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { Trash2, Pencil, X, Search, UserCheck, MessageSquare, Phone, Mail, ChevronLeft, ChevronRight, Filter, Loader2, FileDown } from 'lucide-react';
+import { Trash2, Pencil, X, Search, UserCheck, MessageSquare, Phone, Mail, ChevronLeft, ChevronRight, Filter, Loader2, FileDown, ClipboardList } from 'lucide-react';
 import MapPicker from '../components/MapPicker';
 import Sidebar from '../components/Sidebar';
 import RegistrationForm from '../components/RegistrationForm';
@@ -17,7 +17,8 @@ registerLocale('es', es);
 const AdminDashboard = () => {
   const [records, setRecords] = useState<any[]>([]);
   const [editingRecord, setEditingRecord] = useState<any | null>(null);
-  const [currentView, setCurrentView] = useState<'LIST' | 'REGISTER'>('LIST');
+  const [currentView, setCurrentView] = useState<'LIST' | 'REGISTER' | 'AUDIT'>('LIST');
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -57,6 +58,15 @@ const AdminDashboard = () => {
       if (err.response?.status === 401) navigate('/admin');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchAuditLogs = async () => {
+    try {
+      const res = await api.get('/admin/audit-log');
+      setAuditLogs(res.data);
+    } catch (err) {
+      console.error('Error cargando bitácora', err);
     }
   };
 
@@ -154,6 +164,7 @@ const AdminDashboard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('qsd_admin_token');
+    localStorage.removeItem('qsd_admin_role');
     navigate('/admin');
   };
 
@@ -171,6 +182,17 @@ const AdminDashboard = () => {
     fetchRecords();
   };
 
+  const ACTION_COLORS: Record<string, string> = {
+    CREATE: '#22c55e',
+    UPDATE: '#f59e0b',
+    DELETE: '#ef4444',
+  };
+  const ACTION_LABELS: Record<string, string> = {
+    CREATE: 'Alta',
+    UPDATE: 'Actualización',
+    DELETE: 'Eliminación',
+  };
+
   return (
     <div className="dashboard-layout">
       <Sidebar 
@@ -178,6 +200,7 @@ const AdminDashboard = () => {
         onViewChange={(view) => {
           setCurrentView(view);
           setCurrentPage(1);
+          if (view === 'AUDIT') fetchAuditLogs();
         }} 
         onLogout={handleLogout} 
       />
@@ -186,10 +209,10 @@ const AdminDashboard = () => {
         <header style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h1 style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--text-main)' }}>
-              {currentView === 'LIST' ? 'Gestión de Registros' : 'Nuevo Registro de Ciudadano'}
+              {currentView === 'LIST' ? 'Gestión de Registros' : currentView === 'REGISTER' ? 'Nuevo Registro de Ciudadano' : 'Bitácora de Auditoría'}
             </h1>
             <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-              {currentView === 'LIST' ? `Total: ${filteredRecords.length} encontrados` : 'Completa el formulario para dar de alta un nuevo perfil'}
+              {currentView === 'LIST' ? `Total: ${filteredRecords.length} encontrados` : currentView === 'REGISTER' ? 'Completa el formulario para dar de alta un nuevo perfil' : `${auditLogs.length} eventos registrados`}
             </p>
           </div>
           
@@ -358,7 +381,7 @@ const AdminDashboard = () => {
                 </div>
               )}
             </motion.div>
-          ) : (
+          ) : currentView === 'REGISTER' ? (
             <motion.div 
               key={`register-view-${regFormKey}`}
               initial={{ opacity: 0, x: 20 }}
@@ -367,6 +390,57 @@ const AdminDashboard = () => {
               style={{ maxWidth: '900px', margin: '0 auto' }}
             >
               <RegistrationForm key={regFormKey} onRegistrationSuccess={handleRegistrationSuccess} />
+            </motion.div>
+          ) : (
+            /* AUDIT LOG VIEW */
+            <motion.div
+              key="audit-view"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="glass-panel"
+              style={{ padding: 0, overflow: 'hidden' }}
+            >
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead style={{ background: 'rgba(0,0,0,0.02)' }}>
+                    <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                      <th style={{ padding: '1.25rem 1rem' }}>Acción</th>
+                      <th style={{ padding: '1.25rem 1rem' }}>Ciudadano</th>
+                      <th style={{ padding: '1.25rem 1rem' }}>Administrador</th>
+                      <th style={{ padding: '1.25rem 1rem' }}>Detalles</th>
+                      <th style={{ padding: '1.25rem 1rem' }}>Fecha y Hora</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auditLogs.map(log => (
+                      <tr key={log.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+                        <td style={{ padding: '1.25rem 1rem' }}>
+                          <span style={{ display: 'inline-block', padding: '0.3rem 0.8rem', borderRadius: '999px', fontSize: '0.78rem', fontWeight: 700, background: `${ACTION_COLORS[log.action]}22`, color: ACTION_COLORS[log.action] }}>
+                            {ACTION_LABELS[log.action] || log.action}
+                          </span>
+                        </td>
+                        <td style={{ padding: '1.25rem 1rem', fontWeight: 500 }}>{log.citizen_name}</td>
+                        <td style={{ padding: '1.25rem 1rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{log.admin_email}</td>
+                        <td style={{ padding: '1.25rem 1rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{log.details || '—'}</td>
+                        <td style={{ padding: '1.25rem 1rem', fontSize: '0.85rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                          {log.timestamp ? new Date(log.timestamp).toLocaleString('es-MX') : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                    {auditLogs.length === 0 && (
+                      <tr>
+                        <td colSpan={5} style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                            <ClipboardList size={48} opacity={0.2} />
+                            <span>No hay eventos registrados aún.</span>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
