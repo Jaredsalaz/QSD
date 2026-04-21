@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-export const API_BASE_URL = 'http://51.89.23.206:8888/api';
+const envBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
+
+// Default to same-origin API route to avoid mixed content under HTTPS.
+export const API_BASE_URL = envBaseUrl?.trim() || '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
