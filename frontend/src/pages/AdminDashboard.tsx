@@ -6,6 +6,7 @@ import { Trash2, Pencil, X, Search, UserCheck, MessageSquare, Phone, Mail, Chevr
 import MapPicker from '../components/MapPicker';
 import Sidebar from '../components/Sidebar';
 import RegistrationForm from '../components/RegistrationForm';
+import PdfDrive from '../components/PdfDrive';
 import AlertModal from '../components/AlertModal';
 import ReportModal from '../components/ReportModal';
 import DatePicker, { registerLocale } from 'react-datepicker';
@@ -17,7 +18,7 @@ registerLocale('es', es);
 const AdminDashboard = () => {
   const [records, setRecords] = useState<any[]>([]);
   const [editingRecord, setEditingRecord] = useState<any | null>(null);
-  const [currentView, setCurrentView] = useState<'LIST' | 'REGISTER' | 'AUDIT'>('LIST');
+  const [currentView, setCurrentView] = useState<'LIST' | 'REGISTER' | 'AUDIT' | 'PDF'>('LIST');
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -209,10 +210,10 @@ const AdminDashboard = () => {
         <header style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h1 style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--text-main)' }}>
-              {currentView === 'LIST' ? 'Gestión de Registros' : currentView === 'REGISTER' ? 'Nuevo Registro de Ciudadano' : 'Bitácora de Auditoría'}
+              {currentView === 'LIST' ? 'Gestión de Registros' : currentView === 'REGISTER' ? 'Nuevo Registro de Ciudadano' : currentView === 'PDF' ? 'Unidad de Documentos PDF' : 'Bitácora de Auditoría'}
             </h1>
             <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-              {currentView === 'LIST' ? `Total: ${filteredRecords.length} encontrados` : currentView === 'REGISTER' ? 'Completa el formulario para dar de alta un nuevo perfil' : `${auditLogs.length} eventos registrados`}
+              {currentView === 'LIST' ? `Total: ${filteredRecords.length} encontrados` : currentView === 'REGISTER' ? 'Completa el formulario para dar de alta un nuevo perfil' : currentView === 'PDF' ? 'Gestiona, organiza y comparte archivos PDF de seguridad' : `${auditLogs.length} eventos registrados`}
             </p>
           </div>
           
@@ -391,6 +392,8 @@ const AdminDashboard = () => {
             >
               <RegistrationForm key={regFormKey} onRegistrationSuccess={handleRegistrationSuccess} />
             </motion.div>
+          ) : currentView === 'PDF' ? (
+            <PdfDrive />
           ) : (
             /* AUDIT LOG VIEW */
             <motion.div

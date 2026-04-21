@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Date, DateTime, Boolean, Text, Enum
+from sqlalchemy import Column, String, Date, DateTime, Boolean, Text, Enum, BigInteger, ForeignKey
 import enum
 from sqlalchemy.dialects.postgresql import UUID
 from database import Base
@@ -49,3 +49,26 @@ class AuditLog(Base):
     citizen_name = Column(String(300), nullable=False)
     details = Column(Text, nullable=True)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow, index=True)
+
+class PdfFolder(Base):
+    __tablename__ = "pdf_folders"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    name = Column(String(255), nullable=False)
+    parent_id = Column(UUID(as_uuid=True), ForeignKey("pdf_folders.id"), nullable=True)  # null = root
+    created_by = Column(String(200), nullable=False)
+    is_deleted = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class PdfFile(Base):
+    __tablename__ = "pdf_files"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    original_name = Column(String(500), nullable=False)
+    stored_name = Column(String(500), nullable=False)  # UUID-based name on disk
+    file_path = Column(String(1000), nullable=False)    # full path on disk
+    file_size = Column(BigInteger, nullable=False)       # bytes
+    folder_id = Column(UUID(as_uuid=True), ForeignKey("pdf_folders.id"), nullable=True)  # null = root
+    uploaded_by = Column(String(200), nullable=False)
+    is_deleted = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)

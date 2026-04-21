@@ -1,10 +1,10 @@
 import React from 'react';
-import { List, UserPlus, LogOut, ClipboardList } from 'lucide-react';
+import { List, UserPlus, LogOut, ClipboardList, FileText } from 'lucide-react';
 import logoPequeno from '../assets/Logo pequeño.jpeg';
 
 interface SidebarProps {
-  currentView: 'LIST' | 'REGISTER' | 'AUDIT';
-  onViewChange: (view: 'LIST' | 'REGISTER' | 'AUDIT') => void;
+  currentView: 'LIST' | 'REGISTER' | 'AUDIT' | 'PDF';
+  onViewChange: (view: 'LIST' | 'REGISTER' | 'AUDIT' | 'PDF') => void;
   onLogout: () => void;
 }
 
@@ -34,6 +34,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onLogout }
         >
           <UserPlus size={22} />
           <span>Nuevo Registro</span>
+        </div>
+
+        <div 
+          className={`sidebar-item ${currentView === 'PDF' ? 'active' : ''}`}
+          onClick={() => onViewChange('PDF')}
+        >
+          <FileText size={22} />
+          <span>PDFs</span>
         </div>
 
         {isDev && (
