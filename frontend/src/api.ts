@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_BASE_URL = 'https://qsd.fly.dev/api';
+export const API_BASE_URL = 'http://51.89.23.206:8888/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
