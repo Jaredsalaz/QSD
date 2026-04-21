@@ -415,7 +415,7 @@ const PdfDrive = () => {
   }, [currentFolderId]);
 
   // ─── Active Uploads ───────────────────────
-  const _hasActiveUploads = uploadQueue.some(u => u.status === 'uploading' || u.status === 'pending');
+
 
   // Determine displayed items
   const displayedFiles = searchResults !== null ? searchResults : files;
