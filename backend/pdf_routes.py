@@ -293,6 +293,65 @@ def delete_file(
     return {"message": "Archivo eliminado correctamente"}
 
 
+@router.put("/files/{file_id}/move")
+def move_file(
+    file_id: str,
+    folder_id: str = Form(None),
+    db: Session = Depends(get_db),
+    current_admin: models.Admin = Depends(get_current_admin),
+):
+    pdf_file = db.query(models.PdfFile).filter(
+        models.PdfFile.id == file_id,
+        models.PdfFile.is_deleted == False,
+    ).first()
+    if not pdf_file:
+        raise HTTPException(status_code=404, detail="Archivo no encontrado")
+
+    target_folder = None
+    if folder_id:
+        target_folder = db.query(models.PdfFolder).filter(
+            models.PdfFolder.id == folder_id,
+            models.PdfFolder.is_deleted == False,
+        ).first()
+        if not target_folder:
+            raise HTTPException(status_code=404, detail="Carpeta destino no encontrada")
+
+    previous_folder_id = str(pdf_file.folder_id) if pdf_file.folder_id else None
+    if previous_folder_id == (folder_id if folder_id else None):
+        return {
+            "id": str(pdf_file.id),
+            "original_name": pdf_file.original_name,
+            "file_size": pdf_file.file_size,
+            "folder_id": str(pdf_file.folder_id) if pdf_file.folder_id else None,
+            "uploaded_by": pdf_file.uploaded_by,
+            "created_at": pdf_file.created_at.isoformat() if pdf_file.created_at else None,
+        }
+
+    pdf_file.folder_id = folder_id if folder_id else None
+    db.commit()
+    db.refresh(pdf_file)
+
+    destination_label = f"carpeta {target_folder.name}" if target_folder else "raíz"
+    source_label = f"carpeta {previous_folder_id}" if previous_folder_id else "raíz"
+    log_pdf_action(
+        db,
+        current_admin.email,
+        "UPDATE",
+        pdf_file.id,
+        f"PDF: {pdf_file.original_name}",
+        f"[PDF Drive] Archivo movido de {source_label} a {destination_label}",
+    )
+
+    return {
+        "id": str(pdf_file.id),
+        "original_name": pdf_file.original_name,
+        "file_size": pdf_file.file_size,
+        "folder_id": str(pdf_file.folder_id) if pdf_file.folder_id else None,
+        "uploaded_by": pdf_file.uploaded_by,
+        "created_at": pdf_file.created_at.isoformat() if pdf_file.created_at else None,
+    }
+
+
 @router.get("/files/{file_id}/download")
 def download_file(
     file_id: str,

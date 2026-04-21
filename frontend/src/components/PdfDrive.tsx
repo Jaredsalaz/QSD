@@ -152,6 +152,8 @@ const PdfDrive = () => {
   const [folders, setFolders] = useState<PdfFolder[]>([]);
   const [files, setFiles] = useState<PdfFileItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [draggingFileId, setDraggingFileId] = useState<string | null>(null);
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
 
   // Upload
   const [uploadQueue, setUploadQueue] = useState<UploadItem[]>([]);
@@ -400,7 +402,10 @@ const PdfDrive = () => {
   // ─── Drag & Drop ──────────────────────────
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragActive(true);
+    const hasExternalFiles = Array.from(e.dataTransfer.types).includes('Files');
+    if (hasExternalFiles) {
+      setIsDragActive(true);
+    }
   }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
@@ -413,6 +418,63 @@ const PdfDrive = () => {
     setIsDragActive(false);
     if (e.dataTransfer.files.length) processFiles(e.dataTransfer.files);
   }, [currentFolderId]);
+
+  const handleFileDragStart = (e: any, fileId: string) => {
+    if (!e?.dataTransfer) return;
+    setDraggingFileId(fileId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('application/x-qsd-file-id', fileId);
+  };
+
+  const handleFileDragEnd = () => {
+    setDraggingFileId(null);
+    setDragOverFolderId(null);
+  };
+
+  const handleFolderDragOver = (e: React.DragEvent, folderId: string) => {
+    if (!draggingFileId) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverFolderId(folderId);
+  };
+
+  const handleFolderDragLeave = (folderId: string) => {
+    if (dragOverFolderId === folderId) {
+      setDragOverFolderId(null);
+    }
+  };
+
+  const handleFileMoveToFolder = async (fileId: string, targetFolderId: string) => {
+    const targetFile = files.find((f) => f.id === fileId);
+    if (!targetFile || targetFile.folder_id === targetFolderId) return;
+
+    const formData = new FormData();
+    formData.append('folder_id', targetFolderId);
+
+    try {
+      await api.put(`/pdf/files/${fileId}/move`, formData);
+      fetchContents(currentFolderId);
+    } catch {
+      setAlert({
+        isOpen: true,
+        type: 'error',
+        title: 'Error',
+        message: 'No se pudo mover el archivo a la carpeta destino.',
+      });
+    }
+  };
+
+  const handleFolderDrop = async (e: React.DragEvent, folderId: string) => {
+    if (!draggingFileId) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const fileId = e.dataTransfer.getData('application/x-qsd-file-id') || draggingFileId;
+    setDragOverFolderId(null);
+    setDraggingFileId(null);
+    await handleFileMoveToFolder(fileId, folderId);
+  };
 
   // ─── Active Uploads ───────────────────────
 
@@ -605,11 +667,15 @@ const PdfDrive = () => {
           {displayedFolders.map(folder => (
             <motion.div
               key={folder.id}
-              className="pdf-grid-item"
+              className={`pdf-grid-item ${dragOverFolderId === folder.id ? 'drop-target' : ''}`}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               whileHover={{ scale: 1.02 }}
               onClick={() => navigateToFolder(folder.id)}
+              onDragOver={(e) => handleFolderDragOver(e, folder.id)}
+              onDragEnter={(e) => handleFolderDragOver(e, folder.id)}
+              onDragLeave={() => handleFolderDragLeave(folder.id)}
+              onDrop={(e) => handleFolderDrop(e, folder.id)}
             >
               <div className="item-actions">
                 <button
@@ -632,11 +698,14 @@ const PdfDrive = () => {
           {displayedFiles.map(file => (
             <motion.div
               key={file.id}
-              className="pdf-grid-item"
+              className={`pdf-grid-item ${draggingFileId === file.id ? 'is-dragging' : ''}`}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               whileHover={{ scale: 1.02 }}
               onClick={() => handleDownload(file)}
+              draggable={searchResults === null}
+              onDragStartCapture={(e) => handleFileDragStart(e, file.id)}
+              onDragEndCapture={handleFileDragEnd}
             >
               <div className="item-actions">
                 <button title="Descargar" onClick={(e) => { e.stopPropagation(); handleDownload(file); }}>

@@ -49,6 +49,7 @@ const AdminDashboard = () => {
   });
 
   const navigate = useNavigate();
+  const adminEmail = localStorage.getItem('qsd_admin_email') || 'Administrador';
 
   const fetchRecords = async () => {
     setIsLoading(true);
@@ -166,6 +167,7 @@ const AdminDashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem('qsd_admin_token');
     localStorage.removeItem('qsd_admin_role');
+    localStorage.removeItem('qsd_admin_email');
     navigate('/admin');
   };
 
@@ -216,9 +218,29 @@ const AdminDashboard = () => {
               {currentView === 'LIST' ? `Total: ${filteredRecords.length} encontrados` : currentView === 'REGISTER' ? 'Completa el formulario para dar de alta un nuevo perfil' : currentView === 'PDF' ? 'Gestiona, organiza y comparte archivos PDF de seguridad' : `${auditLogs.length} eventos registrados`}
             </p>
           </div>
-          
-          {currentView === 'LIST' && (
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                height: '45px',
+                padding: '0 1rem',
+                borderRadius: '12px',
+                background: 'rgba(212, 175, 55, 0.1)',
+                border: '1px solid rgba(212, 175, 55, 0.25)',
+                color: 'var(--gold-opaque)',
+                fontWeight: 600,
+              }}
+              title={`Sesión activa: ${adminEmail}`}
+            >
+              <UserCheck size={16} />
+              <span>{adminEmail}</span>
+            </div>
+
+            {currentView === 'LIST' && (
+              <>
               {/* Reports Button */}
               <button 
                 onClick={() => setIsReportModalOpen(true)}
@@ -261,8 +283,9 @@ const AdminDashboard = () => {
                   }}
                 />
               </div>
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </header>
 
         <AnimatePresence mode="wait">
