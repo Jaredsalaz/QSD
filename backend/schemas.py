@@ -27,8 +27,8 @@ class RegistryUpdate(RegistryBase):
 class RegistryResponse(RegistryBase):
     id: UUID
     is_deleted: bool
-    created_at: Optional[datetime.datetime] = None
-    updated_at: Optional[datetime.datetime] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
