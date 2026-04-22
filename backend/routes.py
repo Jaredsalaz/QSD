@@ -77,7 +77,7 @@ def admin_login(req: schemas.LoginRequest, db: Session = Depends(get_db)):
 
 @router.get("/admin/records", response_model=list[schemas.RegistryResponse])
 def get_all_records(db: Session = Depends(get_db), current_admin: models.Admin = Depends(get_current_admin)):
-    records = db.query(models.UserRegistry).filter(models.UserRegistry.is_deleted == False).all()
+    records = db.query(models.UserRegistry).filter(models.UserRegistry.is_deleted == False).order_by(models.UserRegistry.updated_at.desc()).all()
     return records
 
 @router.put("/admin/records/{record_id}", response_model=schemas.RegistryResponse)
@@ -86,6 +86,15 @@ def update_record(record_id: str, payload: schemas.RegistryUpdate, db: Session =
     if not record or record.is_deleted:
         raise HTTPException(status_code=404, detail="Registro no encontrado")
         
+    # Check for email collision with other active records
+    if payload.email != record.email:
+        existing_user = db.query(models.UserRegistry).filter(
+            models.UserRegistry.email == payload.email,
+            models.UserRegistry.is_deleted == False
+        ).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="El correo ya se encuentra registrado por otro usuario activo.")
+
     for key, value in payload.dict().items():
         setattr(record, key, value)
     

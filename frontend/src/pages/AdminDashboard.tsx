@@ -26,7 +26,8 @@ const AdminDashboard = () => {
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const [currentAuditPage, setCurrentAuditPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Filter State
   const [selectedSecretary, setSelectedSecretary] = useState('ALL');
@@ -196,6 +197,12 @@ const AdminDashboard = () => {
     DELETE: 'Eliminación',
   };
 
+  const totalAuditPages = Math.ceil(auditLogs.length / itemsPerPage);
+  const paginatedAuditLogs = useMemo(() => {
+    const start = (currentAuditPage - 1) * itemsPerPage;
+    return auditLogs.slice(start, start + itemsPerPage);
+  }, [auditLogs, currentAuditPage]);
+
   return (
     <div className="dashboard-layout">
       <Sidebar 
@@ -203,6 +210,7 @@ const AdminDashboard = () => {
         onViewChange={(view) => {
           setCurrentView(view);
           setCurrentPage(1);
+          setCurrentAuditPage(1);
           if (view === 'AUDIT') fetchAuditLogs();
         }} 
         onLogout={handleLogout} 
@@ -439,7 +447,7 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {auditLogs.map(log => (
+                    {paginatedAuditLogs.map(log => (
                       <tr key={log.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
                         <td style={{ padding: '1.25rem 1rem' }}>
                           <span style={{ display: 'inline-block', padding: '0.3rem 0.8rem', borderRadius: '999px', fontSize: '0.78rem', fontWeight: 700, background: `${ACTION_COLORS[log.action]}22`, color: ACTION_COLORS[log.action] }}>
@@ -450,7 +458,7 @@ const AdminDashboard = () => {
                         <td style={{ padding: '1.25rem 1rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{log.admin_email}</td>
                         <td style={{ padding: '1.25rem 1rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{log.details || '—'}</td>
                         <td style={{ padding: '1.25rem 1rem', fontSize: '0.85rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                          {log.timestamp ? new Date(log.timestamp).toLocaleString('es-MX') : '—'}
+                          {log.timestamp ? new Date(log.timestamp).toLocaleString('es-MX', { timeZone: 'America/Mexico_City' }) : '—'}
                         </td>
                       </tr>
                     ))}
@@ -467,6 +475,36 @@ const AdminDashboard = () => {
                   </tbody>
                 </table>
               </div>
+
+              {/* Audit Pagination Controls */}
+              {auditLogs.length > 0 && (
+                <div style={{ padding: '1.5rem', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                    Mostrando <span style={{ fontWeight: 600 }}>{paginatedAuditLogs.length}</span> de <span style={{ fontWeight: 600 }}>{auditLogs.length}</span>
+                  </p>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button 
+                      disabled={currentAuditPage === 1}
+                      onClick={() => setCurrentAuditPage(p => p - 1)}
+                      className="btn-secondary" 
+                      style={{ padding: '0.5rem 1rem', opacity: currentAuditPage === 1 ? 0.5 : 1 }}
+                    >
+                      <ChevronLeft size={18} /> Anterior
+                    </button>
+                    <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', padding: '0 1rem' }}>
+                      <span style={{ fontWeight: 600 }}>{currentAuditPage}</span> / {totalAuditPages}
+                    </div>
+                    <button 
+                      disabled={currentAuditPage === totalAuditPages}
+                      onClick={() => setCurrentAuditPage(p => p + 1)}
+                      className="btn-secondary" 
+                      style={{ padding: '0.5rem 1rem', opacity: currentAuditPage === totalAuditPages ? 0.5 : 1 }}
+                    >
+                      Siguiente <ChevronRight size={18} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

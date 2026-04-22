@@ -16,7 +16,7 @@ class UserRegistry(Base):
     secretary = Column(String(200), nullable=False)
     position = Column(String(200), nullable=False)
     phone = Column(String(50), nullable=False)
-    email = Column(String(200), unique=True, index=True, nullable=False)
+    email = Column(String(200), index=True, nullable=False) # Unique constraint removed to support logical deletes (validation handled in logic)
     social_media = Column(String(200), nullable=True)
     address = Column(String(500), nullable=False)
     latitude = Column(String(100), nullable=True)
@@ -25,6 +25,7 @@ class UserRegistry(Base):
     
     is_deleted = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
 class Admin(Base):
     __tablename__ = "admins"

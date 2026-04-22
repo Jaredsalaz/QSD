@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
 
 class RegistryBase(BaseModel):
@@ -27,6 +27,8 @@ class RegistryUpdate(RegistryBase):
 class RegistryResponse(RegistryBase):
     id: UUID
     is_deleted: bool
+    created_at: Optional[datetime.datetime] = None
+    updated_at: Optional[datetime.datetime] = None
 
     class Config:
         from_attributes = True
