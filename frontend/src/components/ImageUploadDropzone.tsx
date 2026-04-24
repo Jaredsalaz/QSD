@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Upload, Image as ImageIcon, CheckCircle } from 'lucide-react';
+import { Upload, CheckCircle } from 'lucide-react';
 
 interface ImageUploadDropzoneProps {
   label: string;
