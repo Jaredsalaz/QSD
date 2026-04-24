@@ -23,8 +23,10 @@ services:
     environment:
       - DATABASE_URL=postgresql://qsd_admin:qsd_password@db:5432/qsd_db
       - PDF_STORAGE_DIR=/app/pdf_storage
+      - IMAGES_STORAGE_DIR=/app/images_storage
     volumes:
       - ./backend/pdf_storage:/app/pdf_storage
+      - ./backend/images_storage:/app/images_storage
     depends_on:
       - db
 
