@@ -2,10 +2,12 @@ import { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { Trash2, Pencil, X, Search, UserCheck, MessageSquare, Phone, Mail, ChevronLeft, ChevronRight, Filter, Loader2, FileDown, ClipboardList } from 'lucide-react';
+import { Trash2, Pencil, X, Search, UserCheck, MessageSquare, Phone, Mail, ChevronLeft, ChevronRight, Filter, Loader2, FileDown, ClipboardList, Eye } from 'lucide-react';
 import MapPicker from '../components/MapPicker';
 import Sidebar from '../components/Sidebar';
 import RegistrationForm from '../components/RegistrationForm';
+import ImageUploadDropzone from '../components/ImageUploadDropzone';
+import AuthenticatedImage from '../components/AuthenticatedImage';
 import PdfDrive from '../components/PdfDrive';
 import AlertModal from '../components/AlertModal';
 import ReportModal from '../components/ReportModal';
@@ -18,6 +20,7 @@ registerLocale('es', es);
 const AdminDashboard = () => {
   const [records, setRecords] = useState<any[]>([]);
   const [editingRecord, setEditingRecord] = useState<any | null>(null);
+  const [viewingRecord, setViewingRecord] = useState<any | null>(null);
   const [currentView, setCurrentView] = useState<'LIST' | 'REGISTER' | 'AUDIT' | 'PDF'>('LIST');
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -160,6 +163,31 @@ const AdminDashboard = () => {
         title: 'Error de Guardado',
         message: 'Ocurrió un problema al guardar los cambios.'
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFileUploadEdit = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: 'ine_front_url' | 'ine_back_url') => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    
+    if (!file.type.startsWith('image/')) {
+       setAlert({ isOpen: true, type: 'error', title: 'Error', message: 'Por favor sube solo imágenes.' });
+       return;
+    }
+    
+    const uploadData = new FormData();
+    uploadData.append('file', file);
+    
+    setIsLoading(true);
+    try {
+      const res = await api.post('/upload-image', uploadData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setEditingRecord((prev: any) => ({ ...prev, [fieldName]: res.data.filename }));
+    } catch (err: any) {
+      setAlert({ isOpen: true, type: 'error', title: 'Error de Subida', message: 'No se pudo subir la imagen.' });
     } finally {
       setIsLoading(false);
     }
@@ -359,6 +387,9 @@ const AdminDashboard = () => {
                         </td>
                         <td style={{ padding: '1.5rem 1rem' }}>
                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                            <button onClick={() => setViewingRecord(record)} className="btn-secondary" style={{ padding: '0.5rem', border: 'none', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }} title="Ver detalles">
+                              <Eye size={18} />
+                            </button>
                             <button onClick={() => setEditingRecord({...record})} className="btn-secondary" style={{ padding: '0.5rem', border: 'none', background: 'rgba(212, 175, 55, 0.1)', color: 'var(--gold-opaque)' }}>
                               <Pencil size={18} />
                             </button>
@@ -584,6 +615,19 @@ const AdminDashboard = () => {
                   <input required className="form-control" value={editingRecord.address} onChange={(e) => setEditingRecord({...editingRecord, address: e.target.value})} />
                 </div>
 
+                <div className="grid-2" style={{ marginBottom: '1rem' }}>
+                   <ImageUploadDropzone 
+                     label="INE Frontal (Actualizar)" 
+                     isUploaded={!!editingRecord.ine_front_url} 
+                     onFileSelect={(e) => handleFileUploadEdit(e, 'ine_front_url')} 
+                   />
+                   <ImageUploadDropzone 
+                     label="INE Reverso (Actualizar)" 
+                     isUploaded={!!editingRecord.ine_back_url} 
+                     onFileSelect={(e) => handleFileUploadEdit(e, 'ine_back_url')} 
+                   />
+                </div>
+
                 <div className="form-group" style={{ height: '300px', marginBottom: '2.5rem' }}>
                   <label className="form-label">Geolocalización</label>
                   <MapPicker 
@@ -598,6 +642,61 @@ const AdminDashboard = () => {
                    <button type="submit" className="btn-primary" style={{ flex: 2 }}>Actualizar Registro</button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* VIEW MODAL */}
+        {viewingRecord && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000}}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass-panel" style={{ width: '95%', maxWidth: '850px', maxHeight: '90vh', overflowY: 'auto', background: '#fff', padding: '2.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.1)', paddingBottom: '1rem' }}>
+                <h3 style={{ color: 'var(--text-main)', margin: 0, fontSize: '1.5rem' }}>Detalles del Ciudadano</h3>
+                <button onClick={() => setViewingRecord(null)} style={{ background: 'rgba(0,0,0,0.05)', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '50%', display: 'flex' }}>
+                   <X size={20} color="var(--text-main)" />
+                </button>
+              </div>
+              
+              <div className="grid-2" style={{ gap: '1.5rem' }}>
+                <div>
+                  <h4 style={{ color: 'var(--gold-opaque)', marginBottom: '1rem' }}>Información Personal</h4>
+                  <p><strong>Nombre Completo:</strong> {viewingRecord.name} {viewingRecord.paternal_name} {viewingRecord.maternal_name}</p>
+                  <p><strong>Fecha de Nacimiento:</strong> {viewingRecord.date_of_birth}</p>
+                  <p><strong>Secretaría / Dependencia:</strong> {viewingRecord.secretary}</p>
+                  <p><strong>Cargo / Puesto:</strong> {viewingRecord.position}</p>
+                </div>
+                <div>
+                  <h4 style={{ color: 'var(--gold-opaque)', marginBottom: '1rem' }}>Contacto y Ubicación</h4>
+                  <p><strong>Teléfono:</strong> {viewingRecord.phone}</p>
+                  <p><strong>Correo:</strong> {viewingRecord.email}</p>
+                  <p><strong>Redes Sociales:</strong> {viewingRecord.social_media || 'N/A'}</p>
+                  <p><strong>Código Postal:</strong> {viewingRecord.zip_code}</p>
+                  <p><strong>Dirección:</strong> {viewingRecord.address}</p>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '2rem' }}>
+                <h4 style={{ color: 'var(--gold-opaque)', marginBottom: '1rem' }}>Identificación Oficial (INE)</h4>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                   {viewingRecord.ine_front_url ? (
+                     <div style={{ flex: '1 1 300px' }}>
+                        <p style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.5rem' }}>Frente:</p>
+                        <AuthenticatedImage src={`/images/${viewingRecord.ine_front_url}`} alt="INE Frente" style={{ width: '100%', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', minHeight: '200px' }} />
+                     </div>
+                   ) : (
+                     <p style={{ color: 'var(--text-muted)' }}>No se subió foto frontal.</p>
+                   )}
+
+                   {viewingRecord.ine_back_url ? (
+                     <div style={{ flex: '1 1 300px' }}>
+                        <p style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.5rem' }}>Reverso:</p>
+                        <AuthenticatedImage src={`/images/${viewingRecord.ine_back_url}`} alt="INE Reverso" style={{ width: '100%', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', minHeight: '200px' }} />
+                     </div>
+                   ) : (
+                     <p style={{ color: 'var(--text-muted)' }}>No se subió foto reverso.</p>
+                   )}
+                </div>
+              </div>
             </motion.div>
           </div>
         )}

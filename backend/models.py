@@ -22,6 +22,8 @@ class UserRegistry(Base):
     latitude = Column(String(100), nullable=True)
     longitude = Column(String(100), nullable=True)
     zip_code = Column(String(20), nullable=False)
+    ine_front_url = Column(String(500), nullable=True)
+    ine_back_url = Column(String(500), nullable=True)
     
     is_deleted = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)

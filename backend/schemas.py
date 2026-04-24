@@ -17,6 +17,8 @@ class RegistryBase(BaseModel):
     latitude: Optional[str] = None
     longitude: Optional[str] = None
     zip_code: str = Field(..., min_length=2, max_length=20)
+    ine_front_url: Optional[str] = None
+    ine_back_url: Optional[str] = None
 
 class RegistryCreate(RegistryBase):
     pass
@@ -27,6 +29,8 @@ class RegistryUpdate(RegistryBase):
 class RegistryResponse(RegistryBase):
     id: UUID
     is_deleted: bool
+    ine_front_url: Optional[str] = None
+    ine_back_url: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

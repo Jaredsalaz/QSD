@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+import os
+import uuid
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from database import get_db
@@ -139,3 +142,50 @@ def get_audit_log(db: Session = Depends(get_db), current_admin: models.Admin = D
         }
         for log in logs
     ]
+
+# --- Image Upload Endpoints ---
+
+IMAGES_STORAGE_DIR = os.getenv("IMAGES_STORAGE_DIR", os.path.join(os.path.dirname(__file__), "images_storage"))
+os.makedirs(IMAGES_STORAGE_DIR, exist_ok=True)
+
+@router.post("/upload-image")
+async def upload_image(
+    file: UploadFile = File(...),
+    current_admin: models.Admin = Depends(get_current_admin)
+):
+    # Validate it's an image
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="El archivo debe ser una imagen válida.")
+    
+    # Do NOT allow PDFs
+    if file.filename.lower().endswith(".pdf") or file.content_type == "application/pdf":
+         raise HTTPException(status_code=400, detail="No se permiten archivos PDF.")
+
+    file_ext = os.path.splitext(file.filename)[1]
+    if not file_ext:
+        file_ext = ".jpg"
+    
+    stored_name = f"{uuid.uuid4().hex}{file_ext}"
+    file_path = os.path.join(IMAGES_STORAGE_DIR, stored_name)
+
+    try:
+        with open(file_path, "wb") as buffer:
+            while True:
+                chunk = await file.read(1024 * 1024)
+                if not chunk:
+                    break
+                buffer.write(chunk)
+    except Exception as e:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        raise HTTPException(status_code=500, detail=f"Error al guardar la imagen: {str(e)}")
+
+    return {"filename": stored_name, "url": f"api/images/{stored_name}"}
+
+@router.get("/images/{filename}")
+def get_image(filename: str, current_admin: models.Admin = Depends(get_current_admin)):
+    file_path = os.path.join(IMAGES_STORAGE_DIR, filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Imagen no encontrada")
+    
+    return FileResponse(file_path)

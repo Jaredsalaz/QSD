@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import api from '../api';
 import MapPicker from './MapPicker';
 import DatePicker from 'react-datepicker';
+import ImageUploadDropzone from './ImageUploadDropzone';
 import 'react-datepicker/dist/react-datepicker.css';
 import { es } from 'date-fns/locale/es'; // Optional: for Spanish labels
 
@@ -24,7 +25,9 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegistrationSucce
     address: '',
     latitude: '',
     longitude: '',
-    zip_code: ''
+    zip_code: '',
+    ine_front_url: '',
+    ine_back_url: ''
   });
   
   const [error, setError] = useState('');
@@ -33,6 +36,34 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegistrationSucce
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: 'ine_front_url' | 'ine_back_url') => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    
+    // Quick validation before sending
+    if (!file.type.startsWith('image/')) {
+       setError('Por favor sube solo imágenes para la INE.');
+       return;
+    }
+    
+    const uploadData = new FormData();
+    uploadData.append('file', file);
+    
+    setLoading(true);
+    try {
+      const res = await api.post('/upload-image', uploadData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      // Ensure we clear any previous errors
+      setError('');
+      setFormData(prev => ({ ...prev, [fieldName]: res.data.filename }));
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Error al subir la imagen.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDateChange = (date: Date | null) => {
@@ -52,7 +83,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegistrationSucce
 
   const validate = () => {
     for (const [key, value] of Object.entries(formData)) {
-      if (key !== 'social_media' && key !== 'latitude' && key !== 'longitude' && !value) {
+      if (key !== 'social_media' && key !== 'latitude' && key !== 'longitude' && key !== 'ine_front_url' && key !== 'ine_back_url' && !value) {
         return false;
       }
     }
@@ -151,6 +182,19 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegistrationSucce
             <label className="form-label">Código Postal</label>
             <input type="text" name="zip_code" className="form-control" onChange={handleChange} placeholder="Ej. 01000" required />
           </div>
+        </div>
+
+        <div className="grid-2" style={{ marginTop: '1rem' }}>
+           <ImageUploadDropzone 
+             label="INE Frontal (Opcional)" 
+             isUploaded={!!formData.ine_front_url} 
+             onFileSelect={(e) => handleFileUpload(e, 'ine_front_url')} 
+           />
+           <ImageUploadDropzone 
+             label="INE Reverso (Opcional)" 
+             isUploaded={!!formData.ine_back_url} 
+             onFileSelect={(e) => handleFileUpload(e, 'ine_back_url')} 
+           />
         </div>
 
         <div className="form-group" style={{marginTop: '1rem'}}>
