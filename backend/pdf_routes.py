@@ -224,9 +224,26 @@ async def upload_file(
             raise HTTPException(status_code=404, detail="Carpeta no encontrada")
 
     # Generate unique stored name
-    file_ext = ".pdf"
-    stored_name = f"{uuid.uuid4().hex}{file_ext}"
+    file_ext_disk = ".pdf"
+    stored_name = f"{uuid.uuid4().hex}{file_ext_disk}"
     file_path = os.path.join(PDF_STORAGE_DIR, stored_name)
+
+    # Check for duplicate original names in the same folder and add (1), (2), etc.
+    original_filename = file.filename
+    base_name, extension = os.path.splitext(original_filename)
+    
+    counter = 1
+    unique_name = original_filename
+    while True:
+        existing = db.query(models.PdfFile).filter(
+            models.PdfFile.original_name == unique_name,
+            models.PdfFile.folder_id == (folder_id if folder_id else None),
+            models.PdfFile.is_deleted == False
+        ).first()
+        if not existing:
+            break
+        unique_name = f"{base_name} ({counter}){extension}"
+        counter += 1
 
     # Stream write to disk — no size limit
     total_size = 0
@@ -246,7 +263,7 @@ async def upload_file(
 
     # Save metadata to DB
     pdf_file = models.PdfFile(
-        original_name=file.filename,
+        original_name=unique_name,
         stored_name=stored_name,
         file_path=file_path,
         file_size=total_size,
@@ -257,7 +274,7 @@ async def upload_file(
     db.commit()
     db.refresh(pdf_file)
 
-    log_pdf_action(db, current_admin.email, "CREATE", pdf_file.id, f"PDF: {file.filename}",
+    log_pdf_action(db, current_admin.email, "CREATE", pdf_file.id, f"PDF: {unique_name}",
                    f"[PDF Drive] Archivo subido ({_format_size(total_size)}) en {'raíz' if not folder_id else f'carpeta {folder_id}'}")
 
     return {

@@ -9,6 +9,7 @@ import RegistrationForm from '../components/RegistrationForm';
 import ImageUploadDropzone from '../components/ImageUploadDropzone';
 import AuthenticatedImage from '../components/AuthenticatedImage';
 import PdfDrive from '../components/PdfDrive';
+import LibraryDrive from '../components/LibraryDrive';
 import AlertModal from '../components/AlertModal';
 import ReportModal from '../components/ReportModal';
 import DatePicker, { registerLocale } from 'react-datepicker';
@@ -21,7 +22,7 @@ const AdminDashboard = () => {
   const [records, setRecords] = useState<any[]>([]);
   const [editingRecord, setEditingRecord] = useState<any | null>(null);
   const [viewingRecord, setViewingRecord] = useState<any | null>(null);
-  const [currentView, setCurrentView] = useState<'LIST' | 'REGISTER' | 'AUDIT' | 'PDF'>('LIST');
+  const [currentView, setCurrentView] = useState<'LIST' | 'REGISTER' | 'AUDIT' | 'PDF' | 'LIBRARY'>('LIST');
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -248,10 +249,10 @@ const AdminDashboard = () => {
         <header style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h1 style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--text-main)' }}>
-              {currentView === 'LIST' ? 'Gestión de Registros' : currentView === 'REGISTER' ? 'Nuevo Registro de Ciudadano' : currentView === 'PDF' ? 'Unidad de Documentos PDF' : 'Bitácora de Auditoría'}
+              {currentView === 'LIST' ? 'Gestión de Registros' : currentView === 'REGISTER' ? 'Nuevo Registro de Ciudadano' : currentView === 'PDF' ? 'Unidad de Documentos PDF' : currentView === 'LIBRARY' ? 'Biblioteca de Leyes y Artículos' : 'Bitácora de Auditoría'}
             </h1>
             <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-              {currentView === 'LIST' ? `Total: ${filteredRecords.length} encontrados` : currentView === 'REGISTER' ? 'Completa el formulario para dar de alta un nuevo perfil' : currentView === 'PDF' ? 'Gestiona, organiza y comparte archivos PDF de seguridad' : `${auditLogs.length} eventos registrados`}
+              {currentView === 'LIST' ? `Total: ${filteredRecords.length} encontrados` : currentView === 'REGISTER' ? 'Completa el formulario para dar de alta un nuevo perfil' : currentView === 'PDF' ? 'Gestiona, organiza y comparte archivos PDF de seguridad' : currentView === 'LIBRARY' ? 'Consulta y gestiona reglamentos, leyes y derechos penales' : `${auditLogs.length} eventos registrados`}
             </p>
           </div>
 
@@ -456,6 +457,8 @@ const AdminDashboard = () => {
             </motion.div>
           ) : currentView === 'PDF' ? (
             <PdfDrive />
+          ) : currentView === 'LIBRARY' ? (
+            <LibraryDrive />
           ) : (
             /* AUDIT LOG VIEW */
             <motion.div
@@ -615,6 +618,18 @@ const AdminDashboard = () => {
                   <input required className="form-control" value={editingRecord.address} onChange={(e) => setEditingRecord({...editingRecord, address: e.target.value})} />
                 </div>
 
+                <div className="form-group">
+                  <label className="form-label">Observaciones</label>
+                  <textarea 
+                    className="form-control" 
+                    value={editingRecord.observation || ''} 
+                    onChange={(e) => setEditingRecord({...editingRecord, observation: e.target.value})} 
+                    placeholder="Observaciones adicionales..."
+                    rows={3}
+                    style={{ resize: 'vertical' }}
+                  />
+                </div>
+
                 <div className="grid-2" style={{ marginBottom: '1rem' }}>
                    <ImageUploadDropzone 
                      label="INE Frontal (Actualizar)" 
@@ -673,6 +688,15 @@ const AdminDashboard = () => {
                   <p><strong>Código Postal:</strong> {viewingRecord.zip_code}</p>
                   <p><strong>Dirección:</strong> {viewingRecord.address}</p>
                 </div>
+              </div>
+
+              <div style={{ marginTop: '1.5rem', padding: '1.5rem', background: 'rgba(212,175,55,0.05)', borderRadius: '12px', border: '1px solid rgba(212,175,55,0.1)' }}>
+                <h4 style={{ color: 'var(--gold-opaque)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <ClipboardList size={18} /> Observaciones
+                </h4>
+                <p style={{ margin: 0, whiteSpace: 'pre-wrap', color: viewingRecord.observation ? 'var(--text-main)' : 'var(--text-muted)', fontStyle: viewingRecord.observation ? 'normal' : 'italic' }}>
+                  {viewingRecord.observation || 'Sin observaciones registradas.'}
+                </p>
               </div>
 
               <div style={{ marginTop: '2rem' }}>

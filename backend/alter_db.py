@@ -27,6 +27,14 @@ def update_production_db():
             print("[+] Agregada columna 'role' en admins")
         except Exception as e:
             print("[-] Nota (admins.role):", str(e).split('\n')[0])
+
+        # 3. Agregar columna de observación
+        try:
+            conn.execute(text("ALTER TABLE registries ADD COLUMN observation TEXT;"))
+            conn.commit()
+            print("[+] Agregada columna 'observation' en registries")
+        except Exception as e:
+            print("[-] Nota (observation):", str(e).split('\n')[0])
             
         print("--- Actualización finalizada ---")
 

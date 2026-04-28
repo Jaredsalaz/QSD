@@ -5,6 +5,7 @@ import models
 from database import engine
 from routes import router
 from pdf_routes import router as pdf_router
+from library_routes import router as library_router
 
 # Create DB Tables if they don't exist
 models.Base.metadata.create_all(bind=engine)
@@ -12,6 +13,10 @@ models.Base.metadata.create_all(bind=engine)
 # Ensure PDF storage directory exists
 PDF_STORAGE_DIR = os.getenv("PDF_STORAGE_DIR", os.path.join(os.path.dirname(__file__), "pdf_storage"))
 os.makedirs(PDF_STORAGE_DIR, exist_ok=True)
+
+# Ensure Library storage directory exists
+LIBRARY_STORAGE_DIR = os.getenv("LIBRARY_STORAGE_DIR", os.path.join(os.path.dirname(__file__), "library_storage"))
+os.makedirs(LIBRARY_STORAGE_DIR, exist_ok=True)
 
 app = FastAPI(title="QSD Government App", version="1.0.0")
 
@@ -26,6 +31,7 @@ app.add_middleware(
 
 app.include_router(router, prefix="/api")
 app.include_router(pdf_router, prefix="/api")
+app.include_router(library_router, prefix="/api")
 
 @app.get("/")
 def health_check():

@@ -19,6 +19,7 @@ class RegistryBase(BaseModel):
     zip_code: str = Field(..., min_length=2, max_length=20)
     ine_front_url: Optional[str] = None
     ine_back_url: Optional[str] = None
+    observation: Optional[str] = None
 
 class RegistryCreate(RegistryBase):
     pass

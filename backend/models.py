@@ -24,6 +24,7 @@ class UserRegistry(Base):
     zip_code = Column(String(20), nullable=False)
     ine_front_url = Column(String(500), nullable=True)
     ine_back_url = Column(String(500), nullable=True)
+    observation = Column(Text, nullable=True)
     
     is_deleted = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
@@ -72,6 +73,29 @@ class PdfFile(Base):
     file_path = Column(String(1000), nullable=False)    # full path on disk
     file_size = Column(BigInteger, nullable=False)       # bytes
     folder_id = Column(UUID(as_uuid=True), ForeignKey("pdf_folders.id"), nullable=True)  # null = root
+    uploaded_by = Column(String(200), nullable=False)
+    is_deleted = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class LibraryFolder(Base):
+    __tablename__ = "library_folders"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    name = Column(String(255), nullable=False)
+    parent_id = Column(UUID(as_uuid=True), ForeignKey("library_folders.id"), nullable=True)  # null = root
+    created_by = Column(String(200), nullable=False)
+    is_deleted = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class LibraryFile(Base):
+    __tablename__ = "library_files"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    original_name = Column(String(500), nullable=False)
+    stored_name = Column(String(500), nullable=False)  # UUID-based name on disk
+    file_path = Column(String(1000), nullable=False)    # full path on disk
+    file_size = Column(BigInteger, nullable=False)       # bytes
+    folder_id = Column(UUID(as_uuid=True), ForeignKey("library_folders.id"), nullable=True)  # null = root
     uploaded_by = Column(String(200), nullable=False)
     is_deleted = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)

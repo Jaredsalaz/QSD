@@ -1,10 +1,10 @@
 import React from 'react';
-import { List, UserPlus, LogOut, ClipboardList, FileText } from 'lucide-react';
+import { List, UserPlus, LogOut, ClipboardList, FileText, BookOpen } from 'lucide-react';
 import logoPequeno from '../assets/Logo pequeño.jpeg';
 
 interface SidebarProps {
-  currentView: 'LIST' | 'REGISTER' | 'AUDIT' | 'PDF';
-  onViewChange: (view: 'LIST' | 'REGISTER' | 'AUDIT' | 'PDF') => void;
+  currentView: 'LIST' | 'REGISTER' | 'AUDIT' | 'PDF' | 'LIBRARY';
+  onViewChange: (view: 'LIST' | 'REGISTER' | 'AUDIT' | 'PDF' | 'LIBRARY') => void;
   onLogout: () => void;
 }
 
@@ -42,6 +42,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onLogout }
         >
           <FileText size={22} />
           <span>PDFs</span>
+        </div>
+
+        <div 
+          className={`sidebar-item ${currentView === 'LIBRARY' ? 'active' : ''}`}
+          onClick={() => onViewChange('LIBRARY')}
+        >
+          <BookOpen size={22} />
+          <span>Biblioteca</span>
         </div>
 
         {isDev && (

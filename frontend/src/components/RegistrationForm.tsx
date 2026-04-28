@@ -27,14 +27,15 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegistrationSucce
     longitude: '',
     zip_code: '',
     ine_front_url: '',
-    ine_back_url: ''
+    ine_back_url: '',
+    observation: ''
   });
   
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState<Date | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -83,7 +84,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegistrationSucce
 
   const validate = () => {
     for (const [key, value] of Object.entries(formData)) {
-      if (key !== 'social_media' && key !== 'latitude' && key !== 'longitude' && key !== 'ine_front_url' && key !== 'ine_back_url' && !value) {
+      if (key !== 'social_media' && key !== 'latitude' && key !== 'longitude' && key !== 'ine_front_url' && key !== 'ine_back_url' && key !== 'observation' && !value) {
         return false;
       }
     }
@@ -200,6 +201,18 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegistrationSucce
         <div className="form-group" style={{marginTop: '1rem'}}>
           <label className="form-label">Domicilio Actual</label>
           <input type="text" name="address" className="form-control" onChange={handleChange} placeholder="Ej. Av. Reforma 123, Ciudad" required />
+        </div>
+
+        <div className="form-group" style={{marginTop: '1rem'}}>
+          <label className="form-label">Observaciones (Opcional)</label>
+          <textarea 
+            name="observation" 
+            className="form-control" 
+            onChange={handleChange} 
+            placeholder="Ingrese cualquier observación adicional aquí..." 
+            rows={3}
+            style={{ resize: 'vertical' }}
+          />
         </div>
 
         <MapPicker onLocationSelect={setCoordinates} />
