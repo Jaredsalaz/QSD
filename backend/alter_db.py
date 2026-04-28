@@ -11,6 +11,7 @@ def update_production_db():
             conn.commit()
             print("[+] Agregada columna 'ine_front_url' en registries")
         except Exception as e:
+            conn.rollback()
             print("[-] Nota (ine_front_url):", str(e).split('\n')[0])
             
         try:
@@ -18,6 +19,7 @@ def update_production_db():
             conn.commit()
             print("[+] Agregada columna 'ine_back_url' en registries")
         except Exception as e:
+            conn.rollback()
             print("[-] Nota (ine_back_url):", str(e).split('\n')[0])
             
         # 2. Agregar columna de Rol a admins (por si también falta en el VPS)
@@ -26,6 +28,7 @@ def update_production_db():
             conn.commit()
             print("[+] Agregada columna 'role' en admins")
         except Exception as e:
+            conn.rollback()
             print("[-] Nota (admins.role):", str(e).split('\n')[0])
 
         # 3. Agregar columna de observación
@@ -34,6 +37,7 @@ def update_production_db():
             conn.commit()
             print("[+] Agregada columna 'observation' en registries")
         except Exception as e:
+            conn.rollback()
             print("[-] Nota (observation):", str(e).split('\n')[0])
             
         print("--- Actualización finalizada ---")

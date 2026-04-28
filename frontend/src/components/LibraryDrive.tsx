@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
 import AlertModal from './AlertModal';
 import {
-  Search, FolderPlus, Upload, Folder, FileText, Download,
-  Trash2, X, ChevronRight, Home, CheckCircle2, XCircle, BookOpen, HardDrive,
+  FolderPlus, Upload, Folder, FileText, Download,
+  Trash2, ChevronRight, Home, CheckCircle2, XCircle, BookOpen,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────
@@ -136,9 +136,6 @@ const formatSize = (bytes: number): string => {
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 };
 
-const formatDate = (iso: string): string => {
-  return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
-};
 
 let uploadIdCounter = 0;
 
