@@ -18,6 +18,8 @@ def seed_multiple_admins():
         {"email": "gzavala@qsd.com.mx",    "password": "Zavala2026",   "role": "ADMIN"},
         {"email": "aasancho@qsd.com.mx",   "password": "Sancho_QSD",   "role": "ADMIN"},
         {"email": "lacen@qsd.com.mx",      "password": "Cen2026_QSD",  "role": "ADMIN"},
+        {"email": "iriocana@qsd.com.mx",   "password": "Ivan_QSD2026", "role": "ADMIN"}, # Ivan Ríos Ocaña
+        {"email": "mmiceli@qsd.com.mx",    "password": "Maribel_QSD2026", "role": "ADMIN"}, # Maribel Miceli Maza
     ]
     
     print("Iniciando creación de administradores...")
