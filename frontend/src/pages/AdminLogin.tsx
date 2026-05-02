@@ -97,6 +97,22 @@ const AdminLogin = () => {
             {loading ? 'Ingresando...' : 'Iniciar Sesión'}
           </button>
         </form>
+
+        <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.85rem' }}>
+          <p style={{ color: 'var(--text-muted)' }}>
+            Al iniciar sesión, aceptas nuestro{' '}
+            <a 
+              href="/aviso-de-privacidad" 
+              style={{ color: 'var(--gold-opaque)', textDecoration: 'none', fontWeight: 600 }}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate('/aviso-de-privacidad');
+              }}
+            >
+              Aviso de Privacidad
+            </a>
+          </p>
+        </div>
       </motion.div>
     </div>
   );

@@ -217,7 +217,21 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onRegistrationSucce
 
         <MapPicker onLocationSelect={setCoordinates} />
 
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
+        <div style={{ textAlign: 'center', marginTop: '2rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
+          <p style={{ color: 'var(--text-muted)' }}>
+            Al hacer clic en Registrar, confirma que ha leído y acepta nuestro{' '}
+            <a 
+              href="/aviso-de-privacidad" 
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'var(--gold-opaque)', textDecoration: 'none', fontWeight: 600 }}
+            >
+              Aviso de Privacidad
+            </a>
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
           <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%', maxWidth: '300px' }}>
             {loading ? 'Verificando...' : 'Registrar'}
           </button>
